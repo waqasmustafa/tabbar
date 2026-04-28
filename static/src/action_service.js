@@ -1163,6 +1163,9 @@ export function makeActionManager(env, router = _router) {
       controllerStacks,
       count
     };
+    // Cache latest info globally so ActionContainer can initialize even if it
+    // mounts AFTER this event fires (e.g. navigating from the home dashboard)
+    makeActionManager._lastInfo = controller.__info__;
     env.services.dialog.closeAll();
     env.bus.trigger('ACTION_MANAGER:UPDATE', controller.__info__);
     return Promise.all([currentActionProm, closingProm]).then((r) => r[0]);
