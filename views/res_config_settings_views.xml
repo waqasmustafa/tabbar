@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_tabbar" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.tabbar</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@id='user_default_rights']" position="before">
+                <block title="Multi Tabs Navigation" id="tabbar_settings_block">
+                    <setting string="Enable Multi Tabs" help="Toggle to show or hide the multi tab navigation bar in the backend.">
+                        <div class="mt-2">
+                            <field name="is_multi_tab" widget="boolean_toggle"/>
+                        </div>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>

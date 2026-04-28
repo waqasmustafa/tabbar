@@ -102,6 +102,24 @@ export function makeActionManager(env, router = _router) {
   const keepLast = new KeepLast();
   let id = 0;
   let controllerStack = [];
+
+  // ! My edit: Fetch settings and expose state
+  let isMultiTabEnabled = false;
+  rpc("/web/dataset/call_kw/res.config.settings/get_values", {
+      model: "res.config.settings",
+      method: "get_values",
+      args: [],
+      kwargs: {},
+  }).then((values) => {
+      isMultiTabEnabled = !!values.is_multi_tab;
+  });
+
+  // Expose state for the ActionContainer to access on startup
+  window.__akl_multi_tab__ = {
+      get controllerStacks() { return controllerStacks; },
+      get count() { return count; },
+      get isEnabled() { return isMultiTabEnabled; }
+  };
   let dialogCloseProm;
   let actionCache = {};
   let dialog = null;

@@ -10,16 +10,34 @@ import {
 } from '@web/core/browser/router';
 patch(ActionContainer.prototype, {
     setup() {
-
         super.setup();
+        this.state = useState({
+            isMultiTabEnabled: false,
+        });
         this.action_infos = [];
         this.controllerStacks = {};
-        // this.action_service = useService('action');
+
+        // Initial check for existing actions (Fixes the refresh issue)
+        const aklData = window.__akl_multi_tab__;
+        if (aklData) {
+            this.action_infos = this.get_controllers(aklData);
+            this.controllerStacks = aklData.controllerStacks;
+            this.state.isMultiTabEnabled = aklData.isEnabled;
+        }
 
         this.env.bus.addEventListener(
             'ACTION_MANAGER:UPDATE',
             ({ detail: info }) => {
-                debugger
+                const aklData = window.__akl_multi_tab__;
+                if (aklData) {
+                    this.state.isMultiTabEnabled = aklData.isEnabled;
+                }
+                if (!this.state.isMultiTabEnabled) {
+                    // Standard Odoo behavior: only show the latest action
+                    this.action_infos = [this.get_controllers(info).at(-1)].filter(Boolean);
+                    this.render();
+                    return;
+                }
                 this.action_infos = this.get_controllers(info);
                 this.controllerStacks = info.controllerStacks;
                 this.render();
@@ -120,17 +138,24 @@ ActionContainer.template = xml`
  <t t-name="web.ActionContainer">
         <t t-set="action_infos" t-value="action_infos" />
         <div class="o_action_manager d-flex flex-colum">
-       <AklMultiTab 
-                action_infos="action_infos"
-                active_action="(action_info) => this._on_active_action(action_info)"
-                close_action="(action_info) => this._on_close_action(action_info)"
-                close_current_action="() => this._close_current_action()"
-                close_other_action="() => this._close_other_action()"
-                close_all_action="() => this._on_close_all_action()"
-            />
-            <div t-foreach="action_infos" t-as="action_info" t-if="action_info" t-key="action_info.key" class="akl_controller_container d-flex flex-column" t-att-class="action_info.active ? '' : 'd-none'" >
-                <t t-component="action_info.Component" className="'o_action'" t-props="action_info.componentProps" />
-            </div>
+            <t t-if="state.isMultiTabEnabled">
+                <AklMultiTab 
+                        action_infos="action_infos"
+                        active_action="(action_info) => this._on_active_action(action_info)"
+                        close_action="(action_info) => this._on_close_action(action_info)"
+                        close_current_action="() => this._close_current_action()"
+                        close_other_action="() => this._close_other_action()"
+                        close_all_action="() => this._on_close_all_action()"
+                    />
+                <div t-foreach="action_infos" t-as="action_info" t-if="action_info" t-key="action_info.key" class="akl_controller_container d-flex flex-column" t-att-class="action_info.active ? '' : 'd-none'" >
+                    <t t-component="action_info.Component" className="'o_action'" t-props="action_info.componentProps" />
+                </div>
+            </t>
+            <t t-else="">
+                <t t-if="action_infos.length > 0">
+                    <t t-component="action_infos[action_infos.length - 1].Component" className="'o_action'" t-props="action_infos[action_infos.length - 1].componentProps" />
+                </t>
+            </t>
         </div>
     </t>
 `;
