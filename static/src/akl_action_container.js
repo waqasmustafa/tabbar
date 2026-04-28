@@ -11,36 +11,53 @@ import {
 patch(ActionContainer.prototype, {
     setup() {
         super.setup();
+        const aklData = window.__akl_multi_tab__;
+        
+        // Use session info but also check if we already have tabs open (sticky behavior)
+        const isEnabled = (aklData && aklData.isEnabled) || !!this.env.services.user?.context?.is_multi_tab;
+        
         this.state = useState({
-            isMultiTabEnabled: false,
+            isMultiTabEnabled: isEnabled,
             action_infos: [],
         });
         this.controllerStacks = {};
 
         // Initial check for existing actions (Fixes the refresh issue)
-        const aklData = window.__akl_multi_tab__;
         if (aklData) {
             this.state.action_infos = this.get_controllers(aklData);
             this.controllerStacks = aklData.controllerStacks;
-            this.state.isMultiTabEnabled = aklData.isEnabled;
+            // Force enabled if we have data
+            if (this.state.action_infos.length > 0) {
+                this.state.isMultiTabEnabled = true;
+            }
         }
 
         this.env.bus.addEventListener(
             'ACTION_MANAGER:UPDATE',
             ({ detail: info }) => {
                 const aklData = window.__akl_multi_tab__;
-                if (aklData) {
-                    this.state.isMultiTabEnabled = !!aklData.isEnabled;
-                }
                 
+                // Keep it enabled if it was already enabled or session says so
+                if (aklData && aklData.isEnabled) {
+                    this.state.isMultiTabEnabled = true;
+                }
+
                 if (!this.state.isMultiTabEnabled) {
-                    // Standard Odoo behavior: only show the latest action
                     const controllers = this.get_controllers(info);
                     this.state.action_infos = controllers.length > 0 ? [controllers.at(-1)] : [];
                     this.render();
                     return;
                 }
-                this.state.action_infos = this.get_controllers(info);
+
+                const newActionInfos = this.get_controllers(info);
+                // Only update if we actually got something, otherwise keep existing tabs
+                if (newActionInfos.length > 0) {
+                    this.state.action_infos = newActionInfos;
+                } else if (this.state.action_infos.length === 0 && aklData) {
+                    // Fallback to global data if state is empty
+                    this.state.action_infos = this.get_controllers(aklData);
+                }
+                
                 this.controllerStacks = (info && info.controllerStacks) || (aklData ? aklData.controllerStacks : {});
                 this.render();
             }
