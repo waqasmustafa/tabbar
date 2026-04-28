@@ -11,20 +11,30 @@ import {
 patch(ActionContainer.prototype, {
     setup() {
         super.setup();
-        this.aklState = window.__akl_multi_tab__;
+        // Use useState to make the component re-render when aklState changes
+        this.aklState = useState(window.__akl_multi_tab__ || {
+            isEnabled: false,
+            controllerStacks: {},
+            count: 0
+        });
         this.action_infos = [];
 
-        if (this.aklState) {
-            this.action_infos = this.get_controllers(this.aklState);
-        }
+        // Initial render logic
+        this.action_infos = this.get_controllers(this.aklState);
 
         this.env.bus.addEventListener(
             'ACTION_MANAGER:UPDATE',
             ({ detail: info }) => {
-                if (this.aklState?.isEnabled) {
+                // Refresh the reference to the global state if it was missing
+                if (!window.__akl_multi_tab__ && window.__akl_multi_tab__) {
+                     Object.assign(this.aklState, window.__akl_multi_tab__);
+                }
+
+                if (this.aklState.isEnabled) {
                     this.action_infos = this.get_controllers(this.aklState);
                 } else {
-                    this.action_infos = [this.get_controllers(info).at(-1)].filter(Boolean);
+                    const controllers = this.get_controllers(info);
+                    this.action_infos = controllers.length > 0 ? [controllers[controllers.length - 1]] : [];
                 }
                 this.render();
             }
