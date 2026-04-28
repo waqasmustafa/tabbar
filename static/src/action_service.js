@@ -103,15 +103,13 @@ export function makeActionManager(env, router = _router) {
   let id = 0;
   let controllerStack = [];
 
-  // ! My edit: Use session info for immediate availability
-  const isMultiTabEnabled = !!session.is_multi_tab;
-
-  // Expose state for the ActionContainer to access on startup
-  window.__akl_multi_tab__ = {
-      get controllerStacks() { return controllerStacks; },
-      get count() { return count; },
-      get isEnabled() { return isMultiTabEnabled; }
-  };
+  // ! My edit: Use reactive state for immediate UI updates
+  const aklState = reactive({
+      controllerStacks: {},
+      count: 0,
+      isEnabled: !!session.is_multi_tab,
+  });
+  window.__akl_multi_tab__ = aklState;
   let dialogCloseProm;
   let actionCache = {};
   let dialog = null;
@@ -862,10 +860,9 @@ export function makeActionManager(env, router = _router) {
     const nextStack = [...controllerStack.slice(0, index), controller,];
     if (controller.action.target != 'new') {
       // ! my edit
-      count = count + 1
-      controller.count = count;
-      controllerStacks[nextStack[0].displayName] = nextStack;
-      debugger
+      aklState.count++;
+      controller.count = aklState.count;
+      aklState.controllerStacks[nextStack[0].displayName || action.name || 'Action'] = nextStack;
     }
 
     // Compute breadcrumbs

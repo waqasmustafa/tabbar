@@ -11,35 +11,21 @@ import {
 patch(ActionContainer.prototype, {
     setup() {
         super.setup();
-        this.state = useState({
-            isMultiTabEnabled: false,
-        });
+        this.aklState = window.__akl_multi_tab__;
         this.action_infos = [];
-        this.controllerStacks = {};
 
-        // Initial check for existing actions (Fixes the refresh issue)
-        const aklData = window.__akl_multi_tab__;
-        if (aklData) {
-            this.action_infos = this.get_controllers(aklData);
-            this.controllerStacks = aklData.controllerStacks;
-            this.state.isMultiTabEnabled = aklData.isEnabled;
+        if (this.aklState) {
+            this.action_infos = this.get_controllers(this.aklState);
         }
 
         this.env.bus.addEventListener(
             'ACTION_MANAGER:UPDATE',
             ({ detail: info }) => {
-                const aklData = window.__akl_multi_tab__;
-                if (aklData) {
-                    this.state.isMultiTabEnabled = aklData.isEnabled;
-                }
-                if (!this.state.isMultiTabEnabled) {
-                    // Standard Odoo behavior: only show the latest action
+                if (this.aklState?.isEnabled) {
+                    this.action_infos = this.get_controllers(this.aklState);
+                } else {
                     this.action_infos = [this.get_controllers(info).at(-1)].filter(Boolean);
-                    this.render();
-                    return;
                 }
-                this.action_infos = this.get_controllers(info);
-                this.controllerStacks = info.controllerStacks;
                 this.render();
             }
         );
@@ -83,7 +69,7 @@ patch(ActionContainer.prototype, {
         });
         if (this.action_infos.length > 0) {
 
-            delete this.controllerStacks[action_info.key];
+            delete this.aklState.controllerStacks[action_info.key];
             this.action_infos[this.action_infos.length - 1].active = true; // Set last 
             this.render();
 
@@ -101,7 +87,7 @@ patch(ActionContainer.prototype, {
     _close_other_action() {
         this.action_infos = this.action_infos.filter((info) => {
             if (info.active == false) {
-                delete this.controllerStacks[info.key];
+                delete this.aklState.controllerStacks[info.key];
             }
             return info.active == true
         });
@@ -111,7 +97,7 @@ patch(ActionContainer.prototype, {
     _close_current_action() {
         this.action_infos = this.action_infos.filter((info) => {
             if (info.active == true) {
-                delete this.controllerStacks[info.key];
+                delete this.aklState.controllerStacks[info.key];
             }
             return info.active == false
         });
@@ -120,7 +106,7 @@ patch(ActionContainer.prototype, {
     },
     _on_close_all_action() {
         this.action_infos.forEach((info) => {
-            delete this.controllerStacks[info.key];
+            delete this.aklState.controllerStacks[info.key];
         });
         this.action_infos = {}
         window.location.href = "/";
@@ -135,7 +121,7 @@ ActionContainer.template = xml`
  <t t-name="web.ActionContainer">
         <t t-set="action_infos" t-value="action_infos" />
         <div class="o_action_manager d-flex flex-column">
-            <t t-if="state.isMultiTabEnabled">
+            <t t-if="aklState and aklState.isEnabled">
                 <AklMultiTab 
                         action_infos="action_infos"
                         active_action="(action_info) => this._on_active_action(action_info)"
