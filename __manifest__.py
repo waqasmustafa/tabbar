@@ -20,7 +20,6 @@
     "assets": {
         "web.assets_backend": [
            "tabbar/static/src/**/*",
-           "tabbar/static/src/action_container.xml",
         ],
     },
             
