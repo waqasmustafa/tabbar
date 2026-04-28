@@ -4,12 +4,14 @@ import { AklMultiTab } from './components/multi_tab/akl_multi_tab';
 import { globalTabState } from './action_service';
 import { browser } from '@web/core/browser/browser';
 import { router as _router } from '@web/core/browser/router';
+import { useState } from "@odoo/owl";
 
 patch(ActionContainer.prototype, {
     setup() {
         super.setup();
-        // Bind the global reactive state to this component instance
-        this.globalTabs = globalTabState;
+        // Use useState to make the component subscribe to the global reactive state.
+        // This ensures OWL re-renders the UI as soon as the global state changes.
+        this.globalTabs = useState(globalTabState);
     },
 
     _on_close_action(action_info) {
