@@ -11,23 +11,23 @@ import {
 patch(ActionContainer.prototype, {
     setup() {
         super.setup();
-        this.action_infos = [];
-        this.controllerStacks = {};
+        this.state = useState({
+            action_infos: [],
+            controllerStacks: {},
+        });
         this.action_service = useService('action');
 
         const info = this.action_service.get_info();
         if (info) {
-            this.action_infos = this.get_controllers(info);
-            this.controllerStacks = info.controllerStacks;
+            this.state.action_infos = this.get_controllers(info);
+            this.state.controllerStacks = info.controllerStacks;
         }
 
         this.env.bus.addEventListener(
             'ACTION_MANAGER:UPDATE',
-            ({ detail: info }) => {
-                debugger
-                this.action_infos = this.get_controllers(info);
-                this.controllerStacks = info.controllerStacks;
-                this.render();
+            (info) => {
+                this.state.action_infos = this.get_controllers(info);
+                this.state.controllerStacks = info.controllerStacks;
             }
         );
     },
@@ -65,54 +65,50 @@ patch(ActionContainer.prototype, {
     },
 
     _on_close_action(action_info) {
-        this.action_infos = this.action_infos.filter((info) => {
+        this.state.action_infos = this.state.action_infos.filter((info) => {
             return info.key !== action_info.key;
         });
-        if (this.action_infos.length > 0) {
+        if (this.state.action_infos.length > 0) {
 
-            delete this.controllerStacks[action_info.key];
-            this.action_infos[this.action_infos.length - 1].active = true; // Set last 
-            this.render();
+            delete this.state.controllerStacks[action_info.key];
+            this.state.action_infos[this.state.action_infos.length - 1].active = true; // Set last 
 
         }
 
     },
     _on_active_action(action_info) {
         debugger
-        this.action_infos.forEach((info) => {
+        this.state.action_infos.forEach((info) => {
             info.active = info.key === action_info.key;
         });
         const url = _router.stateToUrl(action_info.__info__.state)
         browser.history.pushState({}, "", url);
-        this.render();
     },
     _close_other_action() {
-        this.action_infos = this.action_infos.filter((info) => {
+        this.state.action_infos = this.state.action_infos.filter((info) => {
             if (info.active == false) {
-                delete this.controllerStacks[info.key];
+                delete this.state.controllerStacks[info.key];
             }
             return info.active == true
         });
 
-        this.render();
     },
     _close_current_action() {
         debugger
-        this.action_infos = this.action_infos.filter((info) => {
+        this.state.action_infos = this.state.action_infos.filter((info) => {
             if (info.active == true) {
-                delete this.controllerStacks[info.key];
+                delete this.state.controllerStacks[info.key];
             }
             return info.active == false
         });
-        this.action_infos[this.action_infos.length - 1].active = true;
-        this.render();
+        this.state.action_infos[this.state.action_infos.length - 1].active = true;
     },
     _on_close_all_action() {
         debugger
-        this.action_infos.forEach((info) => {
-            delete this.controllerStacks[info.key];
+        this.state.action_infos.forEach((info) => {
+            delete this.state.controllerStacks[info.key];
         });
-        this.action_infos = {}
+        this.state.action_infos = {}
         window.location.href = "/";
 
     }
@@ -123,7 +119,7 @@ ActionContainer.components = {
 };
 ActionContainer.template = xml`
  <t t-name="web.ActionContainer">
-        <t t-set="action_infos" t-value="action_infos" />
+        <t t-set="action_infos" t-value="state.action_infos" />
         <div class="o_action_manager d-flex flex-colum">
        <AklMultiTab 
                 action_infos="action_infos"
