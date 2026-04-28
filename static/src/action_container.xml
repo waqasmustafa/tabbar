@@ -1,23 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
-    <!-- Inherit web.ActionContainer and inject our multi-tab logic -->
-    <t t-inherit="web.ActionContainer" t-inherit-mode="extension" owl="1">
-        <xpath expr="//div[contains(@class, 'o_action_manager')]" position="replace">
-            <div class="o_action_manager d-flex flex-column">
-                <AklMultiTab
-                    action_infos="globalTabs.action_infos"
-                    active_action="(info) => this._on_active_action(info)"
-                    close_action="(info) => this._on_close_action(info)"
-                    close_current_action="() => this._close_current_action()"
-                    close_other_action="() => this._close_other_action()"
-                    close_all_action="() => this._on_close_all_action()"
-                />
-                <div t-foreach="globalTabs.action_infos" t-as="info" t-if="info" t-key="info.key" 
-                     class="akl_controller_container d-flex flex-column" 
-                     t-att-class="info.active ? '' : 'd-none'">
-                    <t t-component="info.Component" className="'o_action'" t-props="info.componentProps" />
-                </div>
+    <!-- Overwrite the ActionContainer template by name to avoid inheritance errors -->
+    <t t-name="web.ActionContainer" owl="1">
+        <div class="o_action_manager d-flex flex-column">
+            <!-- Our MultiTab component linked to global reactive state -->
+            <AklMultiTab
+                t-if="globalTabs.action_infos.length > 0"
+                action_infos="globalTabs.action_infos"
+                active_action="(info) => this._on_active_action(info)"
+                close_action="(info) => this._on_close_action(info)"
+                close_current_action="() => this._close_current_action()"
+                close_other_action="() => this._close_other_action()"
+                close_all_action="() => this._on_close_all_action()"
+            />
+            <!-- Loop through our tracked actions to render them as tabs -->
+            <div t-foreach="globalTabs.action_infos" t-as="info" t-if="info" t-key="info.key" 
+                 class="akl_controller_container d-flex flex-column" 
+                 t-att-class="info.active ? '' : 'd-none'">
+                <t t-component="info.Component" className="'o_action'" t-props="info.componentProps" />
             </div>
-        </xpath>
+            
+            <!-- Fallback for standard Odoo behavior if no tabs are tracked yet -->
+            <t t-if="globalTabs.action_infos.length === 0 and info">
+                <t t-component="info.Component" t-props="info.componentProps" t-key="info.id"/>
+            </t>
+        </div>
     </t>
 </templates>

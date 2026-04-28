@@ -2,18 +2,13 @@ import { ActionContainer } from '@web/webclient/actions/action_container';
 import { patch } from '@web/core/utils/patch';
 import { AklMultiTab } from './components/multi_tab/akl_multi_tab';
 import { globalTabState } from './action_service';
-
-import { xml, browser } from '@web/core/browser/browser';
-import { useService } from '@web/core/utils/hooks';
-import {
-    router as _router,
-} from '@web/core/browser/router';
+import { browser } from '@web/core/browser/browser';
+import { router as _router } from '@web/core/browser/router';
 
 patch(ActionContainer.prototype, {
     setup() {
         super.setup();
-        // Link to global reactive state. 
-        // OWL will automatically track changes to globalTabState because it's used in the template.
+        // Bind the global reactive state to this component instance
         this.globalTabs = globalTabState;
     },
 
