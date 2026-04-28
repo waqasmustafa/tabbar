@@ -30,26 +30,29 @@ patch(ActionContainer.prototype, {
             ({ detail: info }) => {
                 const aklData = window.__akl_multi_tab__;
                 if (aklData) {
-                    this.state.isMultiTabEnabled = aklData.isEnabled;
+                    this.state.isMultiTabEnabled = !!aklData.isEnabled;
                 }
+                
                 if (!this.state.isMultiTabEnabled) {
                     // Standard Odoo behavior: only show the latest action
-                    this.state.action_infos = [this.get_controllers(info).at(-1)].filter(Boolean);
+                    const controllers = this.get_controllers(info);
+                    this.state.action_infos = controllers.length > 0 ? [controllers.at(-1)] : [];
                     this.render();
                     return;
                 }
                 this.state.action_infos = this.get_controllers(info);
-                this.controllerStacks = info.controllerStacks || (aklData ? aklData.controllerStacks : {});
+                this.controllerStacks = (info && info.controllerStacks) || (aklData ? aklData.controllerStacks : {});
                 this.render();
             }
         );
     },
     get_controllers(info) {
-        if (!info) {
-            return [];
-        }
+        const aklData = window.__akl_multi_tab__;
+        const currentControllerStacks = (info && info.controllerStacks) || (aklData && aklData.controllerStacks) || {};
+        const currentCount = (info && info.count) || (aklData && aklData.count) || 0;
+
         const action_infos = [];
-        const entries = Object.entries(info.controllerStacks || {});
+        const entries = Object.entries(currentControllerStacks);
 
         entries.forEach(([key, stack]) => {
             if (!stack || stack.length === 0) {
@@ -68,12 +71,13 @@ patch(ActionContainer.prototype, {
                 componentProps: lastController.__info__.componentProps || {},
             }
 
-            if (lastController.count == info.count) {
+            if (lastController.count == currentCount) {
                 action_info.active = true;
             }
             action_infos.push(action_info);
         })
 
+        // Sort by count to maintain tab order if possible, or just return
         return action_infos;
     },
 

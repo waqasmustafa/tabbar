@@ -862,8 +862,9 @@ export function makeActionManager(env, router = _router) {
       // ! my edit
       count = count + 1
       controller.count = count;
-      controllerStacks[nextStack[0].displayName] = nextStack;
-      debugger
+      const rootController = nextStack[0];
+      const stackKey = rootController.displayName || rootController.action.display_name || rootController.action.name || `Tab ${count}`;
+      controllerStacks[stackKey] = nextStack;
     }
 
     // Compute breadcrumbs
