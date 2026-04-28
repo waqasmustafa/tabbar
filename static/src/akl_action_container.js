@@ -10,11 +10,16 @@ import {
 } from '@web/core/browser/router';
 patch(ActionContainer.prototype, {
     setup() {
-
         super.setup();
         this.action_infos = [];
         this.controllerStacks = {};
-        // this.action_service = useService('action');
+        this.action_service = useService('action');
+
+        const info = this.action_service.get_info();
+        if (info) {
+            this.action_infos = this.get_controllers(info);
+            this.controllerStacks = info.controllerStacks;
+        }
 
         this.env.bus.addEventListener(
             'ACTION_MANAGER:UPDATE',

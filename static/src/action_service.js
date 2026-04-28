@@ -1920,6 +1920,10 @@ export function makeActionManager(env, router = _router) {
     get currentController() {
       return _getCurrentController();
     },
+    get_info() {
+      const controller = _getCurrentController();
+      return controller ? controller.__info__ : null;
+    },
   };
 }
 
