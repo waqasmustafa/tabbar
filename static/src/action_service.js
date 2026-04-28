@@ -1,4 +1,4 @@
-import { patch } from "@web/core/patch";
+import { patch } from "@web/core/utils/patch";
 import { registry } from "@web/core/registry";
 import { reactive } from "@odoo/owl";
 import { router as _router } from "@web/core/browser/router";
