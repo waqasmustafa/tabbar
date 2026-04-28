@@ -91,7 +91,6 @@ patch(ActionContainer.prototype, {
 
     },
     _on_active_action(action_info) {
-        debugger
         this.action_infos.forEach((info) => {
             info.active = info.key === action_info.key;
         });
@@ -110,7 +109,6 @@ patch(ActionContainer.prototype, {
         this.render();
     },
     _close_current_action() {
-        debugger
         this.action_infos = this.action_infos.filter((info) => {
             if (info.active == true) {
                 delete this.controllerStacks[info.key];
@@ -121,7 +119,6 @@ patch(ActionContainer.prototype, {
         this.render();
     },
     _on_close_all_action() {
-        debugger
         this.action_infos.forEach((info) => {
             delete this.controllerStacks[info.key];
         });
@@ -137,7 +134,7 @@ ActionContainer.components = {
 ActionContainer.template = xml`
  <t t-name="web.ActionContainer">
         <t t-set="action_infos" t-value="action_infos" />
-        <div class="o_action_manager d-flex flex-colum">
+        <div class="o_action_manager d-flex flex-column">
             <t t-if="state.isMultiTabEnabled">
                 <AklMultiTab 
                         action_infos="action_infos"

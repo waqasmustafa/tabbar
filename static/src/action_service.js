@@ -103,16 +103,8 @@ export function makeActionManager(env, router = _router) {
   let id = 0;
   let controllerStack = [];
 
-  // ! My edit: Fetch settings and expose state
-  let isMultiTabEnabled = false;
-  rpc("/web/dataset/call_kw/res.config.settings/get_values", {
-      model: "res.config.settings",
-      method: "get_values",
-      args: [],
-      kwargs: {},
-  }).then((values) => {
-      isMultiTabEnabled = !!values.is_multi_tab;
-  });
+  // ! My edit: Use session info for immediate availability
+  const isMultiTabEnabled = !!session.is_multi_tab;
 
   // Expose state for the ActionContainer to access on startup
   window.__akl_multi_tab__ = {
