@@ -33,7 +33,8 @@ import {
 } from '@odoo/owl';
 import { downloadReport, getReportUrl } from '@web/webclient/actions/reports/utils';
 import { zip } from '@web/core/utils/arrays';
-import { isHtmlEmpty } from '@web/core/utils/strings';
+// import { isHtmlEmpty } from '@web/core/utils/strings';
+const isHtmlEmpty = (html) => !html || html.toString().trim() === "" || html.toString().trim() === "<p><br></p>";
 import { omit, pick, shallowEqual } from '@web/core/utils/objects';
 import { session } from '@web/session';
 import { exprToBoolean } from '@web/core/utils/strings';
