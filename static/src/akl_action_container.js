@@ -3,7 +3,7 @@ import { patch } from '@web/core/utils/patch';
 import { AklMultiTab } from './components/multi_tab/akl_multi_tab';
 import { makeActionManager } from './action_service';
 
-import { xml, useState, onMounted } from '@odoo/owl';
+import { useState, onMounted } from '@odoo/owl';
 import { browser } from '@web/core/browser/browser';
 import { useService } from '@web/core/utils/hooks';
 import {
@@ -19,6 +19,9 @@ patch(ActionContainer.prototype, {
             action_infos: [],
             controllerStacks: {},
         });
+
+        // Use the action service to potentially get info on setup
+        this.action_service = useService('action');
 
         // If the ACTION_MANAGER:UPDATE event already fired before this
         // component mounted (e.g. clicking an app from the dashboard),
@@ -124,26 +127,8 @@ patch(ActionContainer.prototype, {
     },
 });
 
+// Adding child components to the class
 ActionContainer.components = {
     ...ActionContainer.components,
     AklMultiTab,
 };
-
-ActionContainer.template = xml`
-<t t-name="web.ActionContainer">
-    <t t-set="action_infos" t-value="state.action_infos" />
-    <div class="o_action_manager d-flex flex-colum">
-        <AklMultiTab
-            action_infos="state.action_infos"
-            active_action="(action_info) => this._on_active_action(action_info)"
-            close_action="(action_info) => this._on_close_action(action_info)"
-            close_current_action="() => this._close_current_action()"
-            close_other_action="() => this._close_other_action()"
-            close_all_action="() => this._on_close_all_action()"
-        />
-        <div t-foreach="state.action_infos" t-as="action_info" t-if="action_info" t-key="action_info.key" class="akl_controller_container d-flex flex-column" t-att-class="action_info.active ? '' : 'd-none'">
-            <t t-component="action_info.Component" className="'o_action'" t-props="action_info.componentProps" />
-        </div>
-    </div>
-</t>
-`;
