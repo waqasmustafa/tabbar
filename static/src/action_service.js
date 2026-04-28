@@ -97,20 +97,18 @@ const ControllerComponentTemplate = xml`<t t-component="Component" t-props="comp
 export function makeActionManager(env, router = _router) {
   const breadcrumbCache = {};
   // ! my edit
-  const controllerStacks = {};
-  let count = 0
+  const existingAklData = window.__akl_multi_tab__ || {};
+  const controllerStacks = existingAklData.controllerStacks || {};
+  let count = existingAklData.count || 0;
   const keepLast = new KeepLast();
   let id = 0;
   let controllerStack = [];
-
-  // ! My edit: Use session info for immediate availability
-  const isMultiTabEnabled = !!session.is_multi_tab;
 
   // Expose state for the ActionContainer to access on startup
   window.__akl_multi_tab__ = {
       get controllerStacks() { return controllerStacks; },
       get count() { return count; },
-      get isEnabled() { return isMultiTabEnabled; }
+      get isEnabled() { return !!session.is_multi_tab; }
   };
   let dialogCloseProm;
   let actionCache = {};

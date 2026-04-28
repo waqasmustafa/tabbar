@@ -13,14 +13,14 @@ patch(ActionContainer.prototype, {
         super.setup();
         this.state = useState({
             isMultiTabEnabled: false,
+            action_infos: [],
         });
-        this.action_infos = [];
         this.controllerStacks = {};
 
         // Initial check for existing actions (Fixes the refresh issue)
         const aklData = window.__akl_multi_tab__;
         if (aklData) {
-            this.action_infos = this.get_controllers(aklData);
+            this.state.action_infos = this.get_controllers(aklData);
             this.controllerStacks = aklData.controllerStacks;
             this.state.isMultiTabEnabled = aklData.isEnabled;
         }
@@ -34,12 +34,12 @@ patch(ActionContainer.prototype, {
                 }
                 if (!this.state.isMultiTabEnabled) {
                     // Standard Odoo behavior: only show the latest action
-                    this.action_infos = [this.get_controllers(info).at(-1)].filter(Boolean);
+                    this.state.action_infos = [this.get_controllers(info).at(-1)].filter(Boolean);
                     this.render();
                     return;
                 }
-                this.action_infos = this.get_controllers(info);
-                this.controllerStacks = info.controllerStacks;
+                this.state.action_infos = this.get_controllers(info);
+                this.controllerStacks = info.controllerStacks || (aklData ? aklData.controllerStacks : {});
                 this.render();
             }
         );
@@ -78,20 +78,20 @@ patch(ActionContainer.prototype, {
     },
 
     _on_close_action(action_info) {
-        this.action_infos = this.action_infos.filter((info) => {
+        this.state.action_infos = this.state.action_infos.filter((info) => {
             return info.key !== action_info.key;
         });
-        if (this.action_infos.length > 0) {
+        if (this.state.action_infos.length > 0) {
 
             delete this.controllerStacks[action_info.key];
-            this.action_infos[this.action_infos.length - 1].active = true; // Set last 
+            this.state.action_infos[this.state.action_infos.length - 1].active = true; // Set last 
             this.render();
 
         }
 
     },
     _on_active_action(action_info) {
-        this.action_infos.forEach((info) => {
+        this.state.action_infos.forEach((info) => {
             info.active = info.key === action_info.key;
         });
         const url = _router.stateToUrl(action_info.__info__.state)
@@ -99,7 +99,7 @@ patch(ActionContainer.prototype, {
         this.render();
     },
     _close_other_action() {
-        this.action_infos = this.action_infos.filter((info) => {
+        this.state.action_infos = this.state.action_infos.filter((info) => {
             if (info.active == false) {
                 delete this.controllerStacks[info.key];
             }
@@ -109,20 +109,20 @@ patch(ActionContainer.prototype, {
         this.render();
     },
     _close_current_action() {
-        this.action_infos = this.action_infos.filter((info) => {
+        this.state.action_infos = this.state.action_infos.filter((info) => {
             if (info.active == true) {
                 delete this.controllerStacks[info.key];
             }
             return info.active == false
         });
-        this.action_infos[this.action_infos.length - 1].active = true;
+        this.state.action_infos[this.state.action_infos.length - 1].active = true;
         this.render();
     },
     _on_close_all_action() {
-        this.action_infos.forEach((info) => {
+        this.state.action_infos.forEach((info) => {
             delete this.controllerStacks[info.key];
         });
-        this.action_infos = {}
+        this.state.action_infos = []
         window.location.href = "/";
 
     }
@@ -133,7 +133,7 @@ ActionContainer.components = {
 };
 ActionContainer.template = xml`
  <t t-name="web.ActionContainer">
-        <t t-set="action_infos" t-value="action_infos" />
+        <t t-set="action_infos" t-value="state.action_infos" />
         <div class="o_action_manager d-flex flex-column">
             <t t-if="state.isMultiTabEnabled">
                 <AklMultiTab 
