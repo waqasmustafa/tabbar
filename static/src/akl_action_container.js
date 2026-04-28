@@ -34,6 +34,18 @@ patch(ActionContainer.prototype, {
         if (!info) {
             return [];
         }
+        
+        // Standard Odoo behavior: if no controllerStacks, treat it as a single action
+        if (!info.controllerStacks && (info.Component || info.action)) {
+            return [{
+                key: 'main',
+                Component: info.Component,
+                componentProps: info.componentProps || {},
+                active: true,
+                __info__: info,
+            }];
+        }
+
         const action_infos = [];
         const entries = Object.entries(info.controllerStacks || {});
 
