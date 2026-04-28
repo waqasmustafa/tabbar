@@ -108,7 +108,7 @@ patch(ActionContainer.prototype, {
         this.state.action_infos.forEach((info) => {
             delete this.state.controllerStacks[info.key];
         });
-        this.state.action_infos = {}
+        this.state.action_infos = [];
         window.location.href = "/";
 
     }
@@ -120,8 +120,9 @@ ActionContainer.components = {
 ActionContainer.template = xml`
  <t t-name="web.ActionContainer">
         <t t-set="action_infos" t-value="state.action_infos" />
-        <div class="o_action_manager d-flex flex-colum">
-       <AklMultiTab 
+        <div class="o_action_manager d-flex flex-column">
+            <AklMultiTab 
+                t-if="action_infos and action_infos.length > 0"
                 action_infos="action_infos"
                 active_action="(action_info) => this._on_active_action(action_info)"
                 close_action="(action_info) => this._on_close_action(action_info)"
@@ -129,9 +130,14 @@ ActionContainer.template = xml`
                 close_other_action="() => this._close_other_action()"
                 close_all_action="() => this._on_close_all_action()"
             />
-            <div t-foreach="action_infos" t-as="action_info" t-if="action_info" t-key="action_info.key" class="akl_controller_container d-flex flex-column" t-att-class="action_info.active ? '' : 'd-none'" >
-                <t t-component="action_info.Component" className="'o_action'" t-props="action_info.componentProps" />
-            </div>
+            <t t-if="action_infos and action_infos.length > 0">
+                <div t-foreach="action_infos" t-as="action_info" t-if="action_info" t-key="action_info.key" class="akl_controller_container d-flex flex-column" t-att-class="action_info.active ? '' : 'd-none'" >
+                    <t t-component="action_info.Component" className="'o_action'" t-props="action_info.componentProps" />
+                </div>
+            </t>
+            <t t-else="">
+                <t t-if="info and info.Component" t-component="info.Component" t-props="info.componentProps" t-key="info.id"/>
+            </t>
         </div>
     </t>
 `;
