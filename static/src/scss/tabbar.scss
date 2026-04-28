@@ -1,0 +1,18 @@
+.tabbar {
+    height: 30px;
+    margin-left: 0px;
+    width: 100%;
+    display: flex;
+    .tabbar_left {
+        display: flex;
+        overflow: hidden;
+        flex: 1 1 0%;
+        height: 100%;
+    }
+    .tabbar_right {
+        display: flex;
+        height: 100%;
+        align-items: center;
+        justify-content: center;
+    }
+}
