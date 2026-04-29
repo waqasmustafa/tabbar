@@ -13,8 +13,15 @@ patch(ActionContainer.prototype, {
         super.setup();
         const aklData = window.__akl_multi_tab__;
         
-        // Use session info but also check if we already have tabs open (sticky behavior)
-        const isEnabled = (aklData && aklData.isEnabled) || !!this.env.services.user?.context?.is_multi_tab;
+        // Use localStorage as the primary "fixed" source for the toggle
+        let isEnabled = !!browser.localStorage.getItem('akl_multi_tab_enabled');
+        if (aklData && aklData.isEnabled) {
+            isEnabled = true;
+            browser.localStorage.setItem('akl_multi_tab_enabled', '1');
+        } else if (!!this.env.services.user?.context?.is_multi_tab) {
+            isEnabled = true;
+            browser.localStorage.setItem('akl_multi_tab_enabled', '1');
+        }
         
         this.state = useState({
             isMultiTabEnabled: isEnabled,
@@ -22,14 +29,10 @@ patch(ActionContainer.prototype, {
         });
         this.controllerStacks = {};
 
-        // Initial check for existing actions (Fixes the refresh issue)
+        // Immediately populate action_infos if we have global data
         if (aklData) {
             this.state.action_infos = this.get_controllers(aklData);
             this.controllerStacks = aklData.controllerStacks;
-            // Force enabled if we have data
-            if (this.state.action_infos.length > 0) {
-                this.state.isMultiTabEnabled = true;
-            }
         }
 
         this.env.bus.addEventListener(
@@ -37,9 +40,10 @@ patch(ActionContainer.prototype, {
             ({ detail: info }) => {
                 const aklData = window.__akl_multi_tab__;
                 
-                // Keep it enabled if it was already enabled or session says so
-                if (aklData && aklData.isEnabled) {
+                // If we ever see it enabled, keep it enabled
+                if ((aklData && aklData.isEnabled) || browser.localStorage.getItem('akl_multi_tab_enabled')) {
                     this.state.isMultiTabEnabled = true;
+                    browser.localStorage.setItem('akl_multi_tab_enabled', '1');
                 }
 
                 if (!this.state.isMultiTabEnabled) {
@@ -50,11 +54,10 @@ patch(ActionContainer.prototype, {
                 }
 
                 const newActionInfos = this.get_controllers(info);
-                // Only update if we actually got something, otherwise keep existing tabs
+                // Update action_infos, but fallback to global data if the update is empty
                 if (newActionInfos.length > 0) {
                     this.state.action_infos = newActionInfos;
-                } else if (this.state.action_infos.length === 0 && aklData) {
-                    // Fallback to global data if state is empty
+                } else if (aklData) {
                     this.state.action_infos = this.get_controllers(aklData);
                 }
                 

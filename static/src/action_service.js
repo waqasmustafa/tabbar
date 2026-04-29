@@ -108,7 +108,13 @@ export function makeActionManager(env, router = _router) {
   window.__akl_multi_tab__ = {
       get controllerStacks() { return controllerStacks; },
       get count() { return count; },
-      get isEnabled() { return !!session.is_multi_tab; }
+      get isEnabled() { 
+          const enabled = !!session.is_multi_tab;
+          if (enabled) {
+              browser.localStorage.setItem('akl_multi_tab_enabled', '1');
+          }
+          return enabled;
+      }
   };
   let dialogCloseProm;
   let actionCache = {};
